@@ -11,14 +11,14 @@ if vim.g.coztrail_setup_done ~= 1 then
 end
 
 -- 直接注册命令，而不是加载整个命令模块
-vim.api.nvim_create_user_command("CozTrail", function(opts)
+vim.api.nvim_create_user_command('CozTrail', function(opts)
   -- 惰性加载命令处理模块
   require('coztrail.core.command').execute_command(opts)
 end, {
-  nargs = "*",
-  desc = "代码分析工具",
+  nargs = '*',
+  desc = '代码分析工具',
   complete = function(ArgLead, CmdLine, CursorPos)
     -- 惰性加载补全模块
     return require('coztrail.core.command').command_complete(ArgLead, CmdLine, CursorPos)
-  end
+  end,
 })
