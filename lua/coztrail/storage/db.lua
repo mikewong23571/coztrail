@@ -8,41 +8,39 @@ local function sanitize_path(path)
   return path:gsub('[/:]', '|')
 end
 
-local function get_range(node)
-  if not node or type(node.range) ~= 'function' then
-    logger.error('Invalid node passed to get_range', 'fs')
+-- 基于文件路径和位置的缓存键生成函数
+local function get_cache_key_by_position(file_path, start_line, end_line)
+  if not file_path or not start_line or not end_line then
+    logger.error('Invalid parameters for get_cache_key_by_position', 'fs')
     return nil, nil
   end
 
-  local s, _, e, _ = node:range()
-  return s and (s + 1) or nil, e and (e + 1) or nil
+  local key = sanitize_path(file_path) .. ':' .. start_line .. ':' .. end_line .. '.txt'
+  local path = cache_dir .. '/' .. key
+
+  return key, path
 end
 
--- 修改 save_summary 函数
-function M.save_summary(bufnr, node, text)
-  if not node or type(text) ~= 'string' then
-    logger.warn('Invalid parameters: node or text is nil or malformed', 'fs')
+-- 基于位置的保存函数
+function M.save_summary_by_position(file_path, start_line, end_line, text)
+  if not file_path or not start_line or not end_line or type(text) ~= 'string' then
+    logger.warn('Invalid parameters for save_summary_by_position', 'fs')
     return {
       success = false,
       error_code = 'INVALID_PARAMS',
-      error_message = 'Invalid parameters: node or text is nil or malformed',
+      error_message = 'Invalid parameters: file_path, start_line, end_line or text is invalid',
     }
   end
 
-  local file = vim.api.nvim_buf_get_name(bufnr)
-  if not file or file == '' then
-    logger.warn('No file name found', 'fs')
-    return false
+  local _, path = get_cache_key_by_position(file_path, start_line, end_line)
+  if not path then
+    logger.warn('Cannot determine cache path', 'fs')
+    return {
+      success = false,
+      error_code = 'INVALID_PATH',
+      error_message = 'Cannot determine cache path',
+    }
   end
-
-  local s, e = get_range(node)
-  if not s or not e then
-    logger.warn('Cannot determine range', 'fs')
-    return false
-  end
-
-  local key = sanitize_path(file) .. ':' .. s .. ':' .. e .. '.txt'
-  local path = cache_dir .. '/' .. key
 
   local fd, err = io.open(path, 'w')
   if not fd then
@@ -63,29 +61,25 @@ function M.save_summary(bufnr, node, text)
   }
 end
 
--- 修改 get_summary 函数
-function M.get_summary(bufnr, node)
-  if not node then
-    logger.warn('Invalid node passed to get_summary', 'fs')
+-- 基于位置的获取函数
+function M.get_summary_by_position(file_path, start_line, end_line)
+  if not file_path or not start_line or not end_line then
+    logger.warn('Invalid parameters for get_summary_by_position', 'fs')
     return {
       success = false,
       error_code = 'INVALID_PARAMS',
-      error_message = 'Invalid node passed to get_summary',
+      error_message = 'Invalid parameters: file_path, start_line or end_line is invalid',
     }
   end
 
-  local file = vim.api.nvim_buf_get_name(bufnr)
-  if not file or file == '' then
-    return nil
+  local _, path = get_cache_key_by_position(file_path, start_line, end_line)
+  if not path then
+    return {
+      success = false,
+      error_code = 'INVALID_PATH',
+      error_message = 'Cannot determine cache path',
+    }
   end
-
-  local s, e = get_range(node)
-  if not s or not e then
-    return nil
-  end
-
-  local key = sanitize_path(file) .. ':' .. s .. ':' .. e .. '.txt'
-  local path = cache_dir .. '/' .. key
 
   local fd, err = io.open(path, 'r')
   if not fd then

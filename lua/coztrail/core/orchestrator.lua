@@ -67,13 +67,26 @@ function M.summarize_with_cache(
   callback
 )
   logger.debug('Checking cache for function: ' .. func_name, 'orchestrator')
-  local cached = db.get_summary(bufnr, func_node)
-  if cached then
+
+  -- 获取文件路径
+  local file_path = vim.api.nvim_buf_get_name(bufnr)
+
+  -- 获取节点的起始和结束行
+  local start_line, end_line
+  if func_node and type(func_node.range) == 'function' then
+    local s, _, e, _ = func_node:range()
+    start_line = s and (s + 1) or nil
+    end_line = e and (e + 1) or nil
+  end
+
+  -- 使用新接口获取缓存
+  local cached = db.get_summary_by_position(file_path, start_line, end_line)
+  if cached and cached.success then
     logger.info('Cache hit for function: ' .. func_name, 'orchestrator')
-    -- 修改这里，返回统一的字典格式
+    -- 返回统一的字典格式
     callback({
       success = true,
-      content = cached,
+      content = cached.content,
       source = 'cache',
     })
     return
@@ -83,8 +96,11 @@ function M.summarize_with_cache(
   runner.summarize(func_name, func_text, structure, callee_summaries, function(result)
     if result.success then
       logger.debug('Summary generated, saving to cache for function: ' .. func_name, 'orchestrator')
-      local save_success = db.save_summary(bufnr, func_node, result.content)
-      if save_success then
+
+      -- 使用新接口保存缓存
+      local save_result =
+        db.save_summary_by_position(file_path, start_line, end_line, result.content)
+      if save_result and save_result.success then
         logger.debug(
           'Successfully saved summary to cache for function: ' .. func_name,
           'orchestrator'
@@ -92,6 +108,7 @@ function M.summarize_with_cache(
       else
         logger.warn('Failed to save summary to cache for function: ' .. func_name, 'orchestrator')
       end
+
       -- 保持原有的结果结构，添加来源信息
       result.source = 'llm'
       callback(result)
