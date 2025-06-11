@@ -1,0 +1,59 @@
+<!-- ANCHOR:TASK -->
+Analyze the following function and explain what it does.
+<!-- /ANCHOR:TASK -->
+
+<!-- ANCHOR:OUTPUT_FORMAT -->
+## Output Format:
+Please output in the following format (keep it concise, avoid redundancy):
+**Purpose:** [One sentence describing the main purpose of the function]
+**Key Steps:** [List 2-5 key steps]
+**Important Details:** [Mention important side effects, error handling, or special logic]
+<!-- /ANCHOR:OUTPUT_FORMAT -->
+
+<!-- ANCHOR:EXAMPLE -->
+## Example:
+**Purpose:** Validates user login credentials and creates a session
+**Key Steps:** 1. Validate username/password 2. Query user permissions 3. Generate JWT token 4. Log login activity
+**Important Details:** Account gets locked after 3 failed attempts, updates last login time on success
+<!-- /ANCHOR:EXAMPLE -->
+
+<!-- ANCHOR:FUNCTION_INFO -->
+### Function to Analyze: {{FUNCTION_NAME}}
+{{FUNCTION_TEXT}}
+<!-- /ANCHOR:FUNCTION_INFO -->
+
+<!-- ANCHOR:FUNCTION_CALLS -->
+{{#if FUNCTION_CALLS}}
+### Detected Function Calls:
+{{#each FUNCTION_CALLS}}
+- {{name}} (line {{line}})
+{{/each}}
+{{/if}}
+<!-- /ANCHOR:FUNCTION_CALLS -->
+
+<!-- ANCHOR:CALLEE_SUMMARIES -->
+{{#if CALLEE_SUMMARIES}}
+### Called Function Summaries:
+{{#each CALLEE_SUMMARIES}}
+#### {{name}}
+{{summary}}
+{{/each}}
+{{/if}}
+<!-- /ANCHOR:CALLEE_SUMMARIES -->
+
+<!-- ANCHOR:GLOBAL_VARIABLES -->
+{{#if GLOBAL_VARIABLES}}
+### Global Variables Used:
+{{#each GLOBAL_VARIABLES}}
+- {{name}}
+{{/each}}
+{{/if}}
+<!-- /ANCHOR:GLOBAL_VARIABLES -->
+
+<!-- ANCHOR:SPECIAL_ATTENTION -->
+### Special Attention:
+- If this is a recursive function, explain the termination condition
+- If the function handles user input, note input validation logic
+- If the function involves async operations, explain the async handling approach
+- If the function is just simple data transformation, keep the summary concise
+<!-- /ANCHOR:SPECIAL_ATTENTION -->

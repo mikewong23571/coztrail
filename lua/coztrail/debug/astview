@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# 获取当前脚本实际所在目录（不受调用路径影响）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# 参数检查
+if [[ $# -lt 3 ]]; then
+  echo "Usage: $0 <filename> <row> <col> [+N]"
+  exit 1
+fi
+
+FILE="$1"
+ROW="$2"
+COL="$3"
+UP="${4#+}"  # 去掉 + 前缀
+UP="${UP:-0}"
+
+TEMPLATE="$SCRIPT_DIR/astview_template.lua"
+TMPDIR="$SCRIPT_DIR/tmp"
+OUTFILE="$TMPDIR/result.txt"
+SCRIPTFILE="$TMPDIR/run.lua"
+
+mkdir -p "$TMPDIR"
+
+# 渲染 Lua 模板
+sed \
+  -e "s|\${FILENAME}|$FILE|g" \
+  -e "s|\${ROW}|$ROW|g" \
+  -e "s|\${COL}|$COL|g" \
+  -e "s|\${UP}|$UP|g" \
+  -e "s|\${OUTFILE}|$OUTFILE|g" \
+  "$TEMPLATE" > "$SCRIPTFILE"
+
+# 运行 Neovim 无头模式
+nvim --headless -c "luafile $SCRIPTFILE" -c "quit"
+
+# 输出结果
+cat "$OUTFILE"
