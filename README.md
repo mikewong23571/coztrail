@@ -117,11 +117,11 @@ CozTrail's workflow is as follows:
 
 ### Core Modules
 
-- **core/orchestrator.lua**: Core coordination module, managing the entire analysis process
-- **ts/parser.lua**: Code parsing module, using Treesitter to extract function information
-- **llm/runner.lua**: LLM interaction module, responsible for communicating with large language models
-- **storage/db.lua**: Storage module, managing caching of analysis results
-- **ui/render.lua**: UI rendering module, displaying analysis results
+- [**core/orchestrator.lua**](lua/coztrail/core/orchestrator.lua): Core coordination module, managing the entire analysis process
+- [**ts/parser.lua**](lua/coztrail/ts/parser.lua): Code parsing module, using Treesitter to extract function information
+- [**llm/runner.lua**](lua/coztrail/llm/runner.lua): LLM interaction module, responsible for communicating with large language models
+- [**storage/db.lua**](lua/coztrail/storage/db.lua): Storage module, managing caching of analysis results
+- [**ui/render.lua**](lua/coztrail/ui/render.lua): UI rendering module, displaying analysis results
 
 ## Configuration Options
 

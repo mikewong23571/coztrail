@@ -117,11 +117,11 @@ CozTrail的工作流程如下：
 
 ### 核心模块
 
-- **core/orchestrator.lua**：核心协调模块，管理整个分析流程
-- **ts/parser.lua**：代码解析模块，使用Treesitter提取函数信息
-- **llm/runner.lua**：LLM交互模块，负责与大语言模型通信
-- **storage/db.lua**：存储模块，管理分析结果的缓存
-- **ui/render.lua**：UI渲染模块，展示分析结果
+- [**core/orchestrator.lua**](lua/coztrail/core/orchestrator.lua)：核心协调模块，管理整个分析流程
+- [**ts/parser.lua**](lua/coztrail/ts/parser.lua)：代码解析模块，使用Treesitter提取函数信息
+- [**llm/runner.lua**](lua/coztrail/llm/runner.lua)：LLM交互模块，负责与大语言模型通信
+- [**storage/db.lua**](lua/coztrail/storage/db.lua)：存储模块，管理分析结果的缓存
+- [**ui/render.lua**](lua/coztrail/ui/render.lua)：UI渲染模块，展示分析结果
 
 ## 配置选项
 
