@@ -130,6 +130,7 @@ require("coztrail").setup({
   log_level = "INFO", -- Log levels: TRACE, DEBUG, INFO, WARN, ERROR, OFF
   log_to_file = true, -- Whether to write logs to file
   log_to_console = true, -- Whether to display logs in console
+  max_call_depth = 2, -- Maximum depth for expanding the call graph
   -- Other configuration options...
 })
 ```
