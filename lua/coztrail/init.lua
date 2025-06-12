@@ -5,6 +5,7 @@ local default_config = {
   log_level = 'INFO',
   log_to_file = true,
   log_to_console = true,
+  max_call_depth = 2, -- 调用图展开最大深度
   -- 其他默认配置项
 }
 

@@ -31,6 +31,19 @@ function M.run()
   logger.debug('Function found, analyzing structure', 'orchestrator')
   local bufnr = vim.api.nvim_get_current_buf()
   local structure = parser.analyze_structure(bufnr, func_node)
+
+  local visited = {}
+  local start_line, end_line
+  if func_node and type(func_node.range) == 'function' then
+    local s, _, e, _ = func_node:range()
+    start_line = s and (s + 1) or nil
+    end_line = e and (e + 1) or nil
+  end
+  local file_path = vim.api.nvim_buf_get_name(bufnr)
+  if start_line and end_line then
+    visited[file_path .. ':' .. start_line .. '-' .. end_line] = true
+  end
+
   M.expand_call_graph(bufnr, func_node, structure, function(callee_summaries)
     M.summarize_with_cache(
       bufnr,
@@ -44,7 +57,7 @@ function M.run()
         ui.show_summary(summary, callee_summaries)
       end
     )
-  end)
+  end, 1, visited)
 end
 
 --[[
@@ -112,10 +125,6 @@ function M.summarize_with_cache(
       -- 保持原有的结果结构，添加来源信息
       result.source = 'llm'
       callback(result)
-    else
-      logger.warn('Failed to generate summary: ' .. result.error_message, 'orchestrator')
-      callback(result) -- 已经是字典格式，直接传递
-    end
   end)
 end
 
@@ -125,7 +134,9 @@ end
 * @param call 函数调用信息
 * @param on_resolve 解析完成后的回调函数
 ]]
-function M.resolve_function_definition(bufnr, call, on_resolve)
+function M.resolve_function_definition(bufnr, call, on_resolve, depth, visited)
+  depth = depth or 1
+  visited = visited or {}
   logger.debug(
     'Resolving definition for function: ' .. (call.name or 'unknown') .. ' at line ' .. call.line,
     'orchestrator'
@@ -244,34 +255,52 @@ function M.resolve_function_definition(bufnr, call, on_resolve)
     vim.api.nvim_buf_call(nbufnr, function()
       vim.cmd('filetype detect')
     end)
-
     local start_row = range.start.line
     local cursor_pos = { start_row, range.start.character or 0 }
 
     local func_text, func_node = parser.get_function_at_pos(nbufnr, cursor_pos)
     if func_node then
+      local s, _, e, _ = func_node:range()
+      local file_path = vim.api.nvim_buf_get_name(nbufnr)
+      local func_id = file_path .. ':' .. (s + 1) .. '-' .. (e + 1)
+      if visited[func_id] then
+        logger.debug('Already analyzed function: ' .. func_id, 'orchestrator')
+        on_resolve({ success = true, skip = true, message = 'already analyzed' })
+        return
+      end
+      visited[func_id] = true
+
       logger.debug('Function node found, analyzing structure for: ' .. call.name, 'orchestrator')
       local structure = parser.analyze_structure(nbufnr, func_node)
-      M.expand_call_graph(nbufnr, func_node, structure, function(callee_summaries)
+      local max_depth = require('coztrail').config.max_call_depth or 2
+      if depth >= max_depth then
         M.summarize_with_cache(
           nbufnr,
           call.name,
           func_text,
           func_node,
           structure,
-          callee_summaries,
+          {},
           function(summary)
-            -- summary已经是字典格式，直接传递
             on_resolve(summary)
           end
         )
-      end)
-    else
-      on_resolve({
-        success = false,
-        error = 'Function node not found',
-      })
-    end
+      else
+        M.expand_call_graph(nbufnr, func_node, structure, function(callee_summaries)
+          M.summarize_with_cache(
+            nbufnr,
+            call.name,
+            func_text,
+            func_node,
+            structure,
+            callee_summaries,
+            function(summary)
+              on_resolve(summary)
+            end
+          )
+        end, depth + 1, visited)
+      end
+
   end)
 end
 
@@ -282,7 +311,15 @@ end
 * @param structure 函数结构信息
 * @param on_complete 完成后的回调函数
 ]]
-function M.expand_call_graph(bufnr, func_node, structure, on_complete)
+function M.expand_call_graph(bufnr, func_node, structure, on_complete, depth, visited)
+  depth = depth or 1
+  visited = visited or {}
+
+  local max_depth = require('coztrail').config.max_call_depth or 2
+  if depth > max_depth then
+    logger.debug('Maximum call graph depth exceeded', 'orchestrator')
+    return on_complete({})
+  end
   logger.info('Starting call graph expansion with ' .. #structure.calls .. ' calls', 'orchestrator')
   local summaries = {}
   local total = #structure.calls
@@ -332,7 +369,7 @@ function M.expand_call_graph(bufnr, func_node, structure, on_complete)
         )
         on_complete(summaries)
       end
-    end)
+    end, depth + 1, visited)
   end
 end
 

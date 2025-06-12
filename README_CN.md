@@ -130,6 +130,7 @@ require("coztrail").setup({
   log_level = "INFO", -- 日志级别：TRACE, DEBUG, INFO, WARN, ERROR, OFF
   log_to_file = true, -- 是否将日志写入文件
   log_to_console = true, -- 是否在控制台显示日志
+  max_call_depth = 2, -- 调用图展开的最大深度
   -- 其他配置项...
 })
 ```
